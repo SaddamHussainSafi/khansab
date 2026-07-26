@@ -1,0 +1,55 @@
+name: Daily Instagram post
+
+on:
+  schedule:
+    - cron: '0 13 * * *'    # 09:00 America/Toronto (EDT, UTC-4)
+    - cron: '20 13 * * *'   # retry slots - GitHub cron is best-effort
+    - cron: '40 13 * * *'
+    - cron: '0 14 * * *'
+  workflow_dispatch:
+    inputs:
+      poster:
+        description: 'Force poster N (blank = today''s scheduled poster)'
+        required: false
+        default: ''
+      dry:
+        description: 'Dry run - build container only, do not publish (true/false)'
+        required: false
+        default: 'false'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: ig-daily-post
+  cancel-in-progress: false
+
+jobs:
+  post:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Publish
+        env:
+          IG_TOKEN: ${{ secrets.IG_TOKEN }}
+        run: |
+          ARGS=""
+          if [ "${{ github.event.inputs.dry }}" = "true" ]; then ARGS="$ARGS --dry"; fi
+          if [ -n "${{ github.event.inputs.poster }}" ]; then
+            python3 pipeline/publish.py --force $ARGS "${{ github.event.inputs.poster }}"
+          else
+            python3 pipeline/publish.py $ARGS
+          fi
+      - name: Persist posted.log
+        run: |
+          if [ -n "$(git status --porcelain pipeline/posted.log)" ]; then
+            git config user.name  "khansab-bot"
+            git config user.email "bot@users.noreply.github.com"
+            git pull --rebase --autostash origin main || true
+            git add pipeline/posted.log
+            git commit -m "log [skip ci]"
+            git push
+          fi

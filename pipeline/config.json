@@ -1,0 +1,9 @@
+{
+  "ig_user_id": "REPLACE_WITH_IG_USER_ID",
+  "image_base_url": "https://raw.githubusercontent.com/SaddamHussainSafi/khansab/main/poster-{n}.jpg",
+  "graph_version": "v21.0",
+  "first_scheduled_poster": 1,
+  "first_scheduled_date": "2026-07-27",
+  "last_poster": 30,
+  "timezone": "America/Toronto"
+}
